@@ -18,7 +18,7 @@ if __name__ == '__main__':
         if i == 0 or i == 1:
             data = 1 - data     # get error from acc
 
-        result.append(data[:120, -1])
+        result.append(data[:, -1])
 
     # save result
     result = np.array(result).T
@@ -30,14 +30,14 @@ if __name__ == '__main__':
     fig.suptitle('{} Model'.format(file_name), fontsize=16, fontweight='bold')
     ax1.set_xlabel('Epochs', fontsize=14)
     ax1.set_ylabel('Error(%)', fontsize=14)
-    ax1.plot(range(1, 121), result[:, 0]*100, label='Training Error')
-    ax1.plot(range(1, 121), result[:, 1]*100, label='Validation Error')
+    ax1.plot(range(1, 151), result[:, 0]*100, label='Training Error')
+    ax1.plot(range(1, 151), result[:, 1]*100, label='Validation Error')
     ax1.legend()
 
     ax2.set_xlabel('Epochs', fontsize=14)
     ax2.set_ylabel('Loss', fontsize=14)
-    ax2.plot(range(1, 121), result[:, 2], label='Training Loss')
-    ax2.plot(range(1, 121), result[:, 3], label='Validation Loss')
+    ax2.plot(range(1, 151), result[:, 2], label='Training Loss')
+    ax2.plot(range(1, 151), result[:, 3], label='Validation Loss')
     ax2.legend()
 
     # plt.show()
