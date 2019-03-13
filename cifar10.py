@@ -7,20 +7,22 @@ from keras.callbacks import LearningRateScheduler, TensorBoard, ModelCheckpoint
 import numpy as np
 import math
 import time
-import resnext_model
+import seq_model, resnext_model, resnet_model
 
+model_name = 'resnext'
 num_classes = 10
-epochs = 200
-batch_size = 32
-iterations = 50000 // 32 + 1
+epochs = 150
+batch_size = 128
+iterations = 50000 // 128 + 1
 
 # set up learning rate
 lr_initial = 0.001
-lr_drop = 0.8
+lr_drop = 0.6
 lr_drop_steps = 20
 
+
 def lr_schedule(epoch):
-    return lr_initial * math.pow(lr_drop, math.floor((1+epoch)/lr_drop_steps))
+    return lr_initial * math.pow(lr_drop, math.floor((1 + epoch) / lr_drop_steps))
 
 
 # load data
@@ -63,11 +65,11 @@ resnext.compile(
 )
 
 # set up callbacks
-folder_name = '_'.join(time.asctime(time.localtime(time.time())).split())
+folder_name = model_name + '_' + str(int(time.time()))
 cbks = [
     TensorBoard(log_dir='./log/{}'.format(folder_name)),
     LearningRateScheduler(lr_schedule),
-    ModelCheckpoint('ckpt.{epoch:02d}_{val_loss:.2f}.hdf5', save_best_only=True)
+    ModelCheckpoint(folder_name + '_{epoch:02d}_{val_loss:.2f}.hdf5', save_best_only=True)
 ]
 
 # training

@@ -16,13 +16,13 @@ def conv_bn_relu(x, filters, kernel_size=(3, 3), strides=(1, 1)):
         strides=strides, padding='same', use_bias=False,
         kernel_regularizer=regularizers.l2(weight_decay)
     )(x)
-    x = BatchNormalization(momentum, epsilon)(x)
+    x = BatchNormalization(momentum=momentum, epsilon=epsilon)(x)
     x = Activation('relu')(x)
     return x
 
 
 def conv_block(x, filters):
-    """two conv blocks + 3X3/2 downsampling"""
+    """two conv + 3X3/2 maxpooling"""
 
     x = conv_bn_relu(x, filters)
     x = conv_bn_relu(x, filters)
@@ -32,6 +32,7 @@ def conv_block(x, filters):
 
 def seq_model(x, num_classes):
     """sequential model: vgg-like design"""
+
     x = conv_block(x, 32)
     x = conv_block(x, 64)
     x = conv_block(x, 128)

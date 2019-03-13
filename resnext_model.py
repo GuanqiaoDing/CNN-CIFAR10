@@ -3,81 +3,108 @@ from keras.layers import Conv2D, Dense, Add, Concatenate, \
     Activation, GlobalAveragePooling2D, Lambda
 from keras import regularizers
 
-cardinality = 8
+cardinality = 16
 bottle_width = 64
-chan_per_group = 8  # 64 / 8
+chan_per_group = 4  # 64 / 16
+num_blocks = 3
 momentum = 0.9
 epsilon = 1e-5
 weight_decay = 5e-4
 
 
-def conv_bn_relu(x, filters, kernel_size=(3, 3), strides=(1, 1)):
+def conv_bn_relu(x, filters, name, kernel_size=(3, 3), strides=(1, 1)):
     """3X3 common block: conv2D + batch normalization + relu activation"""
 
     x = Conv2D(
         filters, kernel_size,
         strides=strides, padding='same',
         use_bias=False,
-        kernel_regularizer=regularizers.l2(weight_decay)
+        kernel_regularizer=regularizers.l2(weight_decay),
+        name=name + '_conv2D'
     )(x)
-    x = BatchNormalization(momentum=momentum, epsilon=epsilon)(x)
-    x = Activation('relu')(x)
+    x = BatchNormalization(momentum=momentum, epsilon=epsilon, name=name + '_bn')(x)
+    x = Activation(activation='relu', name=name + '_relu')(x)
     return x
 
 
-def conv_bn(x, filters):
-    """1X1 bottleneck block: conv2D + batch normalization"""
+def conv_bn(x, filters, name):
+    """1X1 change dimension block: conv2D + batch normalization"""
 
     x = Conv2D(
         filters, (1, 1),
         padding='same', use_bias=False,
-        kernel_regularizer=regularizers.l2(weight_decay)
+        kernel_regularizer=regularizers.l2(weight_decay),
+        name=name + '_conv2D'
     )(x)
-    x = BatchNormalization(momentum=momentum, epsilon=epsilon)(x)
+    x = BatchNormalization(momentum=momentum, epsilon=epsilon, name=name + '_bn')(x)
     return x
 
 
-def res_block(x, dim):
+def res_block(x, dim, name):
     """residue block: implement diagram c in the original paper"""
 
-    if x.shape[-1] != dim:
-        identity = conv_bn(x, dim)
-    else:
-        identity = x
+    identity = x
 
-    x = conv_bn_relu(x, bottle_width, kernel_size=(1, 1))
+    # residual path
+    # 1X1 bottleneck
+    x = conv_bn_relu(x, bottle_width, kernel_size=(1, 1), name=name + '_bottle')
 
+    # split and 3X3 conv2D
     layers_split = list()
     for i in range(cardinality):
         partial = Lambda(
-            lambda y: y[:, :, :, i * chan_per_group: (i + 1) * chan_per_group]
+            lambda y: y[:, :, :, i * chan_per_group: (i + 1) * chan_per_group],
+            name=name + '_group{}'.format(i + 1)
         )(x)
-        partial = conv_bn_relu(partial, chan_per_group, kernel_size=(3, 3))
+        partial = Conv2D(
+            chan_per_group, (3, 3),
+            padding='same', use_bias=False,
+            kernel_regularizer=regularizers.l2(weight_decay),
+            name=name + '_group{}_3x3_conv2D'.format(i + 1)
+        )(partial)
         layers_split.append(partial)
 
-    residual = Concatenate()(layers_split)
-    residual = conv_bn(residual, dim)
+    # concatenate and restore dimension
+    residual = Concatenate(name=name + '_concat')(layers_split)
+    residual = BatchNormalization(momentum=momentum, epsilon=epsilon, name=name + '_bn1')(residual)
+    residual = Activation(activation='relu', name=name + '_relu1')(residual)
+    residual = conv_bn(residual, dim, name=name + '_1x1_conv')
 
-    added = Add()([identity, residual])
-    out = Activation('relu')(added)
+    # add identity and residue path
+    added = Add(name=name + '_add')([identity, residual])
+    out = Activation(activation='relu', name=name + '_relu2')(added)
     return out
 
 
 def resnext(x, num_classes):
     """resnext model: mini-version"""
 
-    x = conv_bn_relu(x, 64)
+    # level 0:
+    # input: 32X32X3; output: 32X32X64
+    x = conv_bn_relu(x, 64, name='level0')
 
-    for _ in range(2):
-        x = res_block(x, 64)
-    for _ in range(2):
-        x = res_block(x, 128)
-    for _ in range(2):
-        x = res_block(x, 256)
+    # level 1:
+    # input: 32X32X64; output: 16X16X128
+    for i in range(num_blocks):
+        x = res_block(x, 64, name='level1_block{}'.format(i + 1))
+    x = conv_bn_relu(x, 128, strides=(2, 2), name='level1_DS')
 
-    x = GlobalAveragePooling2D()(x)
+    # level 2:
+    # input: 16X16X128; output: 8X8X256
+    for i in range(num_blocks):
+        x = res_block(x, 128, name='level2_block{}'.format(i + 1))
+    x = conv_bn_relu(x, 256, strides=(2, 2), name='level2_DS')
+
+    # level 3:
+    # input: 8X8X256; output: 1X1X256
+    for i in range(num_blocks):
+        x = res_block(x, 256, name='level3_block{}'.format(i + 1))
+    x = GlobalAveragePooling2D(name='GAP')(x)
+
+    # output
     x = Dense(
         num_classes, activation='softmax',
-        kernel_regularizer=regularizers.l2(weight_decay)
+        kernel_regularizer=regularizers.l2(weight_decay),
+        name='FC'
     )(x)
     return x
