@@ -3,9 +3,6 @@ from keras.layers import Conv2D, Dense, Add, \
     Activation, GlobalAveragePooling2D
 from keras import regularizers
 
-cardinality = 8
-bottle_width = 64
-chan_per_group = 8  # 64 / 8
 num_blocks = [4, 6, 3]
 momentum = 0.9
 epsilon = 1e-5
