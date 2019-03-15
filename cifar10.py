@@ -81,3 +81,6 @@ resnext.fit_generator(
     callbacks=cbks,
     verbose=1
 )
+
+# save model
+resnext.save('{}.h5'.format(model_name))
