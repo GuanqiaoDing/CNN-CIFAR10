@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     # save result
     result = np.array(result).T
-    np.savetxt('./train_results/{}.csv'.format(file_name), result, delimiter=',')
+    np.savetxt('./train_results/{}.csv'.format(file_name), result, fmt='%.5f', delimiter=',')
 
     # plot
     fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 4))

@@ -3,7 +3,5 @@ __pycache__/
 venv/
 log/
 *.hdf5
-**/run_.*
-**/run_.*
-**/run_.*
-**/run_.*
+archive
+ckpt

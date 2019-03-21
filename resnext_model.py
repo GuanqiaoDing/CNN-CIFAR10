@@ -81,25 +81,25 @@ def resnext(x, num_classes):
 
     # level 0:
     # input: 32X32X3; output: 32X32X64
-    x = conv_bn_relu(x, 64, name='level0')
+    x = conv_bn_relu(x, 64, name='lv0')
 
     # level 1:
     # input: 32X32X64; output: 16X16X128
     for i in range(num_blocks):
-        x = res_block(x, 64, name='level1_block{}'.format(i + 1))
-    x = conv_bn_relu(x, 128, strides=(2, 2), name='level1_DS')
+        x = res_block(x, 64, name='lv1_blk{}'.format(i + 1))
+    x = conv_bn_relu(x, 128, strides=(2, 2), name='lv1_DS')
 
     # level 2:
     # input: 16X16X128; output: 8X8X256
     for i in range(num_blocks):
-        x = res_block(x, 128, name='level2_block{}'.format(i + 1))
-    x = conv_bn_relu(x, 256, strides=(2, 2), name='level2_DS')
+        x = res_block(x, 128, name='lv2_blk{}'.format(i + 1))
+    x = conv_bn_relu(x, 256, strides=(2, 2), name='lv2_DS')
 
     # level 3:
     # input: 8X8X256; output: 1X1X256
     for i in range(num_blocks):
-        x = res_block(x, 256, name='level3_block{}'.format(i + 1))
-    x = GlobalAveragePooling2D(name='GAP')(x)
+        x = res_block(x, 256, name='lv3_blk{}'.format(i + 1))
+    x = GlobalAveragePooling2D(name='pool')(x)
 
     # output
     x = Dense(

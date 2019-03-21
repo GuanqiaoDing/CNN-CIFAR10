@@ -2,27 +2,31 @@ from keras import utils, Model
 from keras.datasets import cifar10
 from keras.preprocessing.image import ImageDataGenerator
 from keras.layers import Input
-from keras.optimizers import Adam
+from keras.optimizers import Adam, SGD
 from keras.callbacks import LearningRateScheduler, TensorBoard, ModelCheckpoint
 import numpy as np
-import math
 import time
-import seq_model, resnext_model, resnet_model
+import resnet_model
 
-model_name = 'resnext'
+model_name = 'resnet_20'
 num_classes = 10
+num_blocks = 3  # 3x6+2=20
 epochs = 150
 batch_size = 128
 iterations = 50000 // 128 + 1
 
 # set up learning rate
-lr_initial = 0.001
-lr_drop = 0.6
-lr_drop_steps = 20
+lr_initial = 0.1
+momentum = 0.9
 
 
 def lr_schedule(epoch):
-    return lr_initial * math.pow(lr_drop, math.floor((1 + epoch) / lr_drop_steps))
+    if epoch < 80:
+        return 0.1
+    elif epoch < 120:
+        return 0.01
+    else:
+        return 0.001
 
 
 # load data
@@ -52,28 +56,28 @@ datagen = ImageDataGenerator(
 datagen.fit(x_train)
 
 # build resnext model
-img_input = Input(shape=(32, 32, 3))
-img_prediction = resnext_model.resnext(img_input, num_classes)
-resnext = Model(img_input, img_prediction)
-print(resnext.summary())
+img_input = Input(shape=(32, 32, 3), name='input')
+img_prediction = resnet_model.resnet(img_input, num_classes, num_blocks)
+model = Model(img_input, img_prediction)
+print(model.summary())
 
 # model compile
-resnext.compile(
-    optimizer=Adam(),
+model.compile(
+    optimizer=SGD(lr=lr_initial, momentum=momentum, nesterov=True),
     loss='categorical_crossentropy',
     metrics=['accuracy']
 )
 
 # set up callbacks
-folder_name = model_name + '_' + str(int(time.time()))
+folder_name = './ckpt/' + model_name + '_' + str(int(time.time()))
 cbks = [
     TensorBoard(log_dir='./log/{}'.format(folder_name)),
     LearningRateScheduler(lr_schedule),
-    ModelCheckpoint(folder_name + '_{epoch:02d}_{val_loss:.2f}.hdf5', save_best_only=True)
+    ModelCheckpoint(folder_name + '_{epoch:02d}-{val_loss:.2f}.hdf5', save_best_only=True)
 ]
 
 # training
-resnext.fit_generator(
+history = model.fit_generator(
     datagen.flow(x_train, y_train, batch_size=batch_size),
     steps_per_epoch=iterations,
     epochs=epochs,
@@ -83,4 +87,4 @@ resnext.fit_generator(
 )
 
 # save model
-resnext.save('{}.h5'.format(model_name))
+model.save('{}.h5'.format(model_name))
