@@ -1,7 +1,7 @@
 # Implement and Compare VGG, ResNet and ResNeXt on CIFAR-10
 
 This repository implements residual convolutional networks ResNet and ResNeXt 
-and its related sequential model VGG with Keras on CIFAR-10. 
+and their related sequential model VGG with Keras on CIFAR-10. 
 
 ### VGG
 A typical VGG-like structure has two consecutive 3x3 convolution blocks on each level of
@@ -29,9 +29,9 @@ One thing to note is that the total number of parameters are the same for VGG (a
 ResNet and ResNet v2 when n (# blocks per level) is the same. 
 
 ### ResNeXt
-In larger ResNet network (like ResNet-50 for ImageNet), direct 3x3 convolution is replaced by a bottleneck 1x1 
-+3x3 on a smaller scale + 1x1 convolution that restores dimension. The computation volume is greatly reduced which makes it
-more practical to build deeper network. On each level, there are 3n weighted layers instead of 2n and together there is
+In larger ResNet network (like ResNet-50 for ImageNet), direct 3x3 convolution is replaced by a bottleneck 1x1 conv 
++3x3 conv on a smaller scale + 1x1 convolution that restores dimension. The computation volume is greatly reduced which makes it
+more practical to build deeper network. On each level, there are 3n weighted layers instead of 2n. Together there is
 9n+2 weighted layers.
 
 ResNeXt first adopts this bottleneck design and makes it even better. Instead of a single residual path, ResNeXt aggregates
@@ -47,7 +47,7 @@ somewhat similar to that of ResNet for a fair comparison.
 
 ### Training
 I trained VGG-20, ResNet-20, ResNet-20-v2 and ResNeXt-29 from scratch on CIFAR-10 (i.e. n = 3). He-normal is used as weight initialization.
-In the residual network, the shortcut path may use zero-padding (option a) 1x1 convolution (option b) when the dimensions mismatch. 
+In the residual neural network, the shortcut path may use zero-padding (option a) 1x1 convolution (option b) when the dimensions mismatch. 
 To compare the effects of the two options, I implemented two variants, namely ResNeXt-29-a and ResNeXt-29-b.
 
 CIFAR-10 data is normalized (using training set mean and std) and then augmented by Keras ImageDataGenerator.
