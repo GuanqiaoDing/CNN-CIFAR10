@@ -6,11 +6,12 @@ from keras.optimizers import Adam, SGD
 from keras.callbacks import LearningRateScheduler, TensorBoard, ModelCheckpoint
 import numpy as np
 import time
+import pickle
 import resnet_model
 
 model_name = 'resnet_20'
 num_classes = 10
-num_blocks = 3  # 3x6+2=20
+num_blocks = 3
 epochs = 150
 batch_size = 128
 iterations = 50000 // 128 + 1
@@ -53,7 +54,6 @@ datagen = ImageDataGenerator(
     height_shift_range=0.1,
     horizontal_flip=True
 )
-datagen.fit(x_train)
 
 # build resnext model
 img_input = Input(shape=(32, 32, 3), name='input')
@@ -69,11 +69,11 @@ model.compile(
 )
 
 # set up callbacks
-folder_name = './ckpt/' + model_name + '_' + str(int(time.time()))
+filename = model_name + '_' + str(int(time.time()))
 cbks = [
-    TensorBoard(log_dir='./log/{}'.format(folder_name)),
+    TensorBoard(log_dir='./log/{}'.format(filename)),
     LearningRateScheduler(lr_schedule),
-    ModelCheckpoint(folder_name + '_{epoch:02d}-{val_loss:.2f}.hdf5', save_best_only=True)
+    ModelCheckpoint('./ckpt/' + filename + '_{epoch:02d}-{val_loss:.2f}.hdf5', save_best_only=True)
 ]
 
 # training
@@ -87,4 +87,7 @@ history = model.fit_generator(
 )
 
 # save model
-model.save('{}.h5'.format(model_name))
+model.save('{}.h5'.format(filename))
+
+with open('{}_metrics'.format(filename), 'wb') as f:
+    pickle.dump(history.history, f)

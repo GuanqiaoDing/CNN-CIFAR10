@@ -12,6 +12,7 @@ from keras import backend as K
 #
 # Followed by global average pooling and a dense layer with 10 units.
 # Total weighted layers: 6n+2
+# Total params: 0.27M in resnet-20
 
 momentum = 0.9
 epsilon = 1e-5

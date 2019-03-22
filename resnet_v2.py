@@ -6,6 +6,7 @@ from keras import backend as K
 
 # according to <arXiv:1603.05027>
 # use pre-activation
+# total params: 0.27M in resnet-20-v2
 
 momentum = 0.9
 epsilon = 1e-5
@@ -66,8 +67,7 @@ def res_block(x, dim, name):
     return out
 
 
-def resnet_20(x, num_classes, num_blocks):
-    """resnet-20"""
+def resnet(x, num_classes, num_blocks):
 
     # level 0:
     # input: 32x32x3; output: 32x32x16

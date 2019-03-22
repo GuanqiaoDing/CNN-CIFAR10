@@ -2,6 +2,5 @@
 __pycache__/
 venv/
 log/
-*.hdf5
-archive
-ckpt
+archive/
+ckpt/
